@@ -209,7 +209,9 @@
             //script.onload = postLoadFunction;
             script.appendChild(document.createTextNode(jsText));
             head.appendChild(script);
-            postLoadFunction();
+            if (postLoadFunction && typeof (postLoadFunction) == "function") {
+                postLoadFunction();
+            }
         }
     }
 
