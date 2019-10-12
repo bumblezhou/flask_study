@@ -1,0 +1,258 @@
+<html>
+
+<head>
+    <title>Home</title>
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <!--
+    <link rel="stylesheet" href="/static/css/default.css" type="text/css">
+    <style type="text/css">
+        body {
+            font-family: 'dancing_scriptregular';
+        }
+    </style>
+    <script src="/static/js/TweenMax.min.js"></script>
+    -->
+    <script>
+        function fallingLeaves() {
+            console.log("begin fallingLeaves");
+            var falling = true;
+            TweenLite.set("#container", { perspective: 600 });
+            TweenLite.set("img", { xPercent: "-50%", yPercent: "-50%" });
+
+            var total = 30;
+            var container = document.getElementById("container"), w = window.innerWidth, h = window.innerHeight;
+
+            for (i = 0; i < total; i++) {
+                var leaf = document.createElement('div');
+                TweenLite.set(leaf, { attr: { class: 'dot' }, x: R(0, w), y: R(-200, -150), z: R(-200, 200) });
+                container.appendChild(leaf);
+                animm(leaf);
+            }
+
+            function R(min, max) { return min + Math.random() * (max - min) };
+
+            function animm(elm) {
+                TweenMax.to(elm, R(6, 15), { y: h + 100, ease: Linear.easeNone, repeat: -1, delay: -15 });
+                TweenMax.to(elm, R(4, 8), { x: '+=100', rotationZ: R(0, 180), repeat: -1, yoyo: true, ease: Sine.easeInOut });
+                TweenMax.to(elm, R(2, 8), { rotationX: R(0, 360), rotationY: R(0, 360), repeat: -1, yoyo: true, ease: Sine.easeInOut, delay: -5 });
+            };
+        }
+    </script>
+</head>
+
+<body onload="javascript:onLoaded();">
+    <div id="container">
+        <h1 id="hello"></h1>
+        <div>Test Text</div>
+    </div>
+</body>
+<script>
+    function onLoaded() {
+        var token = sessionStorage.getItem("token");
+        if (token) {
+            var name = sessionStorage.getItem("name");
+            document.getElementById("hello").innerHTML = "Hello " + name + "!"
+            loadModules(token);
+            //fallingLeaves();
+        } else {
+            window.location.href = "/login";
+        }
+    }
+
+    function loadModules(token) {
+        // load css and it's font
+        httpGet("/static/css/default.css", token, loadCssCallbackHandler);
+        // load js
+        httpGet("/static/js/TweenMax.min.js", token, loadJsCallbackHandler, fallingLeaves);
+    }
+
+    /*
+    References:
+        https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest
+    */
+    function httpGet(url, token, callbackHandler, postLoadFunction) {
+        var request = new XMLHttpRequest();
+
+        // set readystatechange listener
+        request.addEventListener('readystatechange', function (e) {
+            if (request.readyState == 2 && request.status == 200) {
+                // Download is being started
+            }
+            else if (request.readyState == 3) {
+                // Download is under progress
+            }
+            else if (request.readyState == 4) {
+                // Downloading has finished
+
+                // request.response holds the binary data of the font
+                if (callbackHandler && typeof (callbackHandler) == "function") {
+                    callbackHandler(url, request.responseText, postLoadFunction);
+                }
+            }
+        });
+
+        // Open url to request resource
+        //  open(method, url, async, user, psw)
+        //  method: the request type GET or POST
+        //  url: the file location
+        //  async: true (asynchronous) or false (synchronous)
+        //  user: optional user name
+        //  psw: optional password
+        request.open("GET", url, true);
+        // set request header
+        request.setRequestHeader("x-token", token);
+        //usr GET method
+        request.send(null);
+        //USE POST Method
+        //xmlHttp.send({"key": "test_key", "value": "test_value"});
+    }
+
+    /*
+    References:
+        https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions
+        https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/matchAll
+        https://regex101.com/
+    */
+    function loadCssCallbackHandler(cssUrl, cssText, postLoadFunction) {
+        // compress css text
+        cssText = cssText.replace(/\s+/g, '');
+        console.log(cssText);
+
+        var cssRootUrl = cssUrl.substr(0, cssUrl.lastIndexOf("/") + 1);
+
+        var replacedText = processFontFaces(cssRootUrl, cssText);
+
+        replacedText = processBackgroundImages(cssRootUrl, cssText);
+
+        createStyleTag(replacedText);
+    }
+
+    function processFontFaces(cssRootUrl, cssText) {
+        var fontFaces = [];
+        var regex = /@font-face{font-family:'([^']*)';src:(?<urls>(url\('?([^']*)'?\)format\('([^']*)'\)[,;]){1,})[\w-:;]{1,}}/g;
+        var match = regex.exec(cssText);
+        while (match != null) {
+            //console.log(match[0]);
+            var fontFaceName = match[1];
+            //console.log(fontFaceName);
+            var fontFamily = { fontFamily: fontFaceName, urls: [] };
+            fontFaces.push(fontFamily);
+            //console.log(match[2]);
+            var regexUrl = /url\('([^']*)'\)/g
+            var innerMatch = regexUrl.exec(match[2]);
+            while (innerMatch != null) {
+                var fontFaceUrl = cssRootUrl + innerMatch[1];
+                //console.log(fontFaceUrl);
+                fontFamily.urls.push(fontFaceUrl);
+                innerMatch = regexUrl.exec(match[2]);
+            }
+
+            match = regex.exec(cssText);
+        }
+        fontFaces.forEach(function (fontFace) {
+            console.log("familyName:" + fontFace.fontFamily + ",url:" + fontFace.urls[0]);
+            loadFont(fontFace.fontFamily, fontFace.urls[0]);
+        });
+
+        var replacedText = cssText.replace(regex, "");
+        return replacedText;
+    }
+
+    function processBackgroundImages(cssRootUrl, cssText) {
+        var regex = /([.#]\w*){[\w\d:;%'-]*(?<bkimg>background[-image]*:url\('?([^']*(.png|.jpg|.bmp|.gif|.jpge|.svg))'?\);?)[\w\d:;%'-\s]*}/g;
+
+        var backgroundImages = [];
+        var match = regex.exec(cssText);
+        while (match != null) {
+            var backgroundImage = match[1];
+            var bkImg = { className: backgroundImage, backgroundImageUrl: '', bkImageStyle: match[2] };
+            backgroundImages.push(bkImg);
+            //console.log(backgroundImage);
+            var imageUrl = match[3];
+            //console.log(imageUrl);
+            bkImg.backgroundImageUrl = imageUrl;
+            match = regex.exec(cssText);
+        }
+
+        var replacedText = cssText;
+        backgroundImages.forEach(function (backgroundImage) {
+            console.log(backgroundImage.backgroundImageUrl + "\r\n");
+            replacedText = replacedText.replace(backgroundImage.backgroundImageUrl, cssRootUrl + backgroundImage.backgroundImageUrl);
+        });
+        console.log(replacedText);
+
+        return replacedText;
+    }
+
+    function createStyleTag(cssText) {
+        if (cssText) {
+            var css = cssText
+            var head = document.head || document.getElementsByTagName('head')[0];
+            var style = document.createElement('style');
+            style.appendChild(document.createTextNode(cssText));
+            head.appendChild(style);
+        }
+    }
+
+    function loadJsCallbackHandler(jsUrl, jsText, postLoadFunction) {
+        // compress js text
+        //jsText = jsText.replace(/\s+/g, '');
+        //console.log(jsText);
+
+        createScriptTag(jsText, postLoadFunction);
+    }
+
+    function createScriptTag(jsText, postLoadFunction) {
+        if (jsText) {
+            var head = document.head || document.getElementsByTagName('head')[0];
+            var script = document.createElement('script');
+            //script.onload = postLoadFunction;
+            script.appendChild(document.createTextNode(jsText));
+            head.appendChild(script);
+            postLoadFunction();
+        }
+    }
+
+    /*
+    References:
+        https://usefulangle.com/post/74/javascript-dynamic-font-loading
+    */
+    function loadFont(fontFaceName, fontFileUrl) {
+        var request = new XMLHttpRequest();
+        request.addEventListener('readystatechange', function (e) {
+            if (request.readyState == 2 && request.status == 200) {
+                // Download is being started
+            }
+            else if (request.readyState == 3) {
+                // Download is under progress
+            }
+            else if (request.readyState == 4) {
+                // Downloading has finished
+
+                // request.response holds the binary data of the font
+
+                var junction_font = new FontFace(fontFaceName, request.response);
+                junction_font.load().then(function (loaded_face) {
+                    document.fonts.add(loaded_face);
+                    document.body.style.fontFamily = '"' + fontFaceName + '"';
+                }).catch(function (error) {
+                    // error occurred
+                });
+            }
+        });
+
+        request.addEventListener('progress', function (e) {
+            var percent_complete = (e.loaded / e.total) * 100;
+            console.log(percent_complete);
+        });
+
+        request.responseType = 'arraybuffer';
+
+        // Downloading a font from the path
+        request.open('GET', fontFileUrl);
+
+        request.send();
+    }
+</script>
+
+</html>
