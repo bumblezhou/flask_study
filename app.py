@@ -11,7 +11,7 @@ def index():
 def login_callback():
     return render_template('callback.html')
 
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['POST', 'GET'])
 def login():
     error = None
     if request.method == 'POST':
