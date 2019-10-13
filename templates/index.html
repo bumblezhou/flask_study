@@ -48,6 +48,13 @@
 </body>
 <script>
     function onLoaded() {
+        var back_token = '{{token}}';
+        var back_name = '{{name}}';
+        if(back_token){
+            sessionStorage.setItem("token", back_token);
+            sessionStorage.setItem("name", back_name);
+            window.history.pushState("", "Home Page", '/');
+        }
         var token = sessionStorage.getItem("token");
         if (token) {
             var name = sessionStorage.getItem("name");
@@ -86,7 +93,8 @@
 
                 // request.response holds the binary data of the font
                 if (callbackHandler && typeof (callbackHandler) == "function") {
-                    callbackHandler(url, request.responseText, postLoadFunction);
+                    // Note: Parameters of callbackHandler: url, text, token, postLoadFunction
+                    callbackHandler(url, request.responseText, token, postLoadFunction);
                 }
             }
         });
@@ -113,21 +121,22 @@
         https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/matchAll
         https://regex101.com/
     */
-    function loadCssCallbackHandler(cssUrl, cssText, postLoadFunction) {
+    // Note: Parameters of callbackHandler: url, text, token, postLoadFunction
+    function loadCssCallbackHandler(cssUrl, cssText, token) {
         // compress css text
         cssText = cssText.replace(/\s+/g, '');
         console.log(cssText);
 
         var cssRootUrl = cssUrl.substr(0, cssUrl.lastIndexOf("/") + 1);
 
-        var replacedText = processFontFaces(cssRootUrl, cssText);
+        var replacedText = processFontFaces(cssRootUrl, cssText, token);
 
-        replacedText = processBackgroundImages(cssRootUrl, cssText);
+        replacedText = processBackgroundImages(cssRootUrl, cssText, token);
 
         createStyleTag(replacedText);
     }
 
-    function processFontFaces(cssRootUrl, cssText) {
+    function processFontFaces(cssRootUrl, cssText, token) {
         var fontFaces = [];
         var regex = /@font-face{font-family:'([^']*)';src:(?<urls>(url\('?([^']*)'?\)format\('([^']*)'\)[,;]){1,})[\w-:;]{1,}}/g;
         var match = regex.exec(cssText);
@@ -151,14 +160,14 @@
         }
         fontFaces.forEach(function (fontFace) {
             console.log("familyName:" + fontFace.fontFamily + ",url:" + fontFace.urls[0]);
-            loadFont(fontFace.fontFamily, fontFace.urls[0]);
+            loadFont(fontFace.fontFamily, fontFace.urls[0], token);
         });
 
         var replacedText = cssText.replace(regex, "");
         return replacedText;
     }
 
-    function processBackgroundImages(cssRootUrl, cssText) {
+    function processBackgroundImages(cssRootUrl, cssText, token) {
         var regex = /([.#]\w*){[\w\d:;%'-]*(?<bkimg>background[-image]*:url\('?([^']*(.png|.jpg|.bmp|.gif|.jpge|.svg))'?\);?)[\w\d:;%'-\s]*}/g;
 
         var backgroundImages = [];
@@ -194,7 +203,8 @@
         }
     }
 
-    function loadJsCallbackHandler(jsUrl, jsText, postLoadFunction) {
+    // Note: Parameters of callbackHandler: url, text, token, postLoadFunction
+    function loadJsCallbackHandler(jsUrl, jsText, token, postLoadFunction) {
         // compress js text
         //jsText = jsText.replace(/\s+/g, '');
         //console.log(jsText);
@@ -219,7 +229,7 @@
     References:
         https://usefulangle.com/post/74/javascript-dynamic-font-loading
     */
-    function loadFont(fontFaceName, fontFileUrl) {
+    function loadFont(fontFaceName, fontFileUrl, token) {
         var request = new XMLHttpRequest();
         request.addEventListener('readystatechange', function (e) {
             if (request.readyState == 2 && request.status == 200) {
@@ -252,7 +262,8 @@
 
         // Downloading a font from the path
         request.open('GET', fontFileUrl);
-
+        // set request header
+        request.setRequestHeader("x-token", token);
         request.send();
     }
 </script>

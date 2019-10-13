@@ -19,8 +19,9 @@ def login():
                        request.form['password']):
             name = request.form['username']
             token = "test_token"
-            return redirect(url_for("login_callback", name=name, token=token))
+            #return redirect(url_for("login_callback", name=name, token=token))
             #return render_template('callback.html', name=name, token=token)
+            return render_template('index.html', name=name, token=token)
         else:
             error = 'Invalid username/password'
     # the code below is executed if the request method
