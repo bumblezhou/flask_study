@@ -11,12 +11,11 @@ def index():
 def login_callback():
     return render_template('callback.html')
 
-@app.route('/login', methods=['POST', 'GET'])
+@app.route('/login', methods=['POST'])
 def login():
     error = None
     if request.method == 'POST':
-        if valid_login(request.form['username'],
-                       request.form['password']):
+        if valid_login(request.form['username'], request.form['password']):
             name = request.form['username']
             token = "test_token"
             #return redirect(url_for("login_callback", name=name, token=token))
