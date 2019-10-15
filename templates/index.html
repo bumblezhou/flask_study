@@ -41,7 +41,19 @@
         }
         function setFavicon(token){
             //function loadImage(url, token, placehere, newElementId, isHidden, callbackHandler)
-            loadImage("static/favicon.png",  token, "container", "fav_image", true, function(){
+            loadImage("static/favicon.png",  token, function(src){
+                var elem = document.createElement("img");
+                elem.setAttribute("src", src);
+                elem.setAttribute("id", "fav_image");
+                //elem.setAttribute("height", "768");
+                //elem.setAttribute("width", "1024");
+                if(true){
+                    elem.setAttribute("style", "display: none");
+                } else {
+                    elem.setAttribute("style", "display: ''");
+                }
+                //elem.setAttribute("alt", "Flower");
+                document.getElementById("container").appendChild(elem);
                 //https://github.com/ejci/favico.js/
                 //http://lab.ejci.net/favico.js/
                 var favicon=new Favico();
@@ -88,7 +100,6 @@
     function loadModules(token) {
         // load css and it's font
         httpGet("/static/css/default.css", token, loadCssCallbackHandler);
-        // load js
         httpGet("/static/js/TweenMax.min.js", token, loadJsCallbackHandler, fallingLeaves);
         httpGet("/static/js/favico-0.3.10.js", token, loadJsCallbackHandler, setFavicon);
     }
@@ -149,11 +160,7 @@
 
         var cssRootUrl = cssUrl.substr(0, cssUrl.lastIndexOf("/") + 1);
 
-        var replacedText = processFontFaces(cssRootUrl, cssText, token);
-
-        replacedText = processBackgroundImages(cssRootUrl, cssText, token);
-
-        createStyleTag(replacedText);
+        processFontFaces(cssRootUrl, cssText, token);
     }
 
     function processFontFaces(cssRootUrl, cssText, token) {
@@ -184,7 +191,7 @@
         });
 
         var replacedText = cssText.replace(regex, "");
-        return replacedText;
+        processBackgroundImages(cssRootUrl, replacedText, token);
     }
 
     function processBackgroundImages(cssRootUrl, cssText, token) {
@@ -203,19 +210,40 @@
             match = regex.exec(cssText);
         }
 
+        var body = document.body || document.getElementsByTagName('body')[0];
+        var tempStyleText = document.createElement('div');
+        tempStyleText.setAttribute("id", "temp_div_for_style");
+        tempStyleText.setAttribute("style", "display:none");
+        body.appendChild(tempStyleText);
         var replacedText = cssText;
-        backgroundImages.forEach(function (backgroundImage) {
-            console.log(backgroundImage.backgroundImageUrl + "\r\n");
-            replacedText = replacedText.replace(backgroundImage.backgroundImageUrl, cssRootUrl + backgroundImage.backgroundImageUrl);
-        });
-        console.log(replacedText);
 
-        return replacedText;
+        taskForWait = backgroundImages.length;
+        backgroundImages.forEach(function (backgroundImage) {
+            console.log(backgroundImage.backgroundImageUrl + "\r\n" + backgroundImage.bkImageStyle);
+            var url = cssRootUrl + backgroundImage.backgroundImageUrl;
+            loadImage(url, token, function(src){
+                replacedText = replacedText.replace(backgroundImage.backgroundImageUrl, src);
+                tempStyleText.textContent = replacedText;
+                taskForWait --;
+            });
+        });
+
+        waitForComplete();
+    }
+
+    var taskForWait = 0;
+    function waitForComplete(){
+        if(taskForWait > 0){
+            setTimeout(waitForComplete, 1000);
+            return;
+        }
+        
+        createStyleTag(document.getElementById("temp_div_for_style").textContent);
+        document.getElementById("temp_div_for_style").remove();
     }
 
     function createStyleTag(cssText) {
         if (cssText) {
-            var css = cssText
             var head = document.head || document.getElementsByTagName('head')[0];
             var style = document.createElement('style');
             style.appendChild(document.createTextNode(cssText));
@@ -293,7 +321,7 @@
         https://base64.guru/converter/encode/image
         http://lab.ejci.net/favico.js/
     */
-    function loadImage(url, token, placehere, newElementId, isHidden, callbackHandler){
+    function loadImage(url, token, callbackHandler){
         // If you are loading file from a remote server, be sure to configure “Access-Control-Allow-Origin”
         // For example, the following image can be loaded from anywhere
         //var url = '//cdn.static.base64.guru/uploads/images/1x1.gif';
@@ -308,30 +336,21 @@
             // Create a Uint8Array from ArrayBuffer
             var codes = new Uint8Array(xhr.response);
 
+            var bin = "";
+            for (var i=0; i<codes.byteLength; i++) {
+                bin += String.fromCharCode(codes[i]);
+            }
             // Get binary string from UTF-16 code units
-            var bin = String.fromCharCode.apply(null, codes);
-
+            //var bin = String.fromCharCode.apply(null, codes);
+            //var bin = Utf8ArrayToStr(codes);
             // Convert binary to Base64
             var base64String = btoa(bin);
             //console.log(base64String); //-> "R0lGODdhAQABAPAAAP8AAAAAACwAAAAAAQABAAACAkQBADs="
             var src = base64ImageHeader + base64String;
-            var elem = document.createElement("img");
-            elem.setAttribute("src", src);
-            elem.setAttribute("id", newElementId);
-            //elem.setAttribute("height", "768");
-            //elem.setAttribute("width", "1024");
-            if(isHidden){
-                elem.setAttribute("style", "display: none");
-            } else {
-                elem.setAttribute("style", "display: ''");
-            }
-            //elem.setAttribute("alt", "Flower");
-            document.getElementById(placehere).appendChild(elem);
             if(callbackHandler && typeof(callbackHandler) == "function"){
-                callbackHandler();
+                callbackHandler(src);
             }
         };
-
         // Send HTTP request and fetch file as ArrayBuffer
         xhr.open('GET', url);
         xhr.responseType = 'arraybuffer';
