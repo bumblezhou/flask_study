@@ -47,17 +47,15 @@
     </div>
 </body>
 <script>
+    function getCookie(name) {
+        var value = "; " + document.cookie;
+        var parts = value.split("; " + name + "=");
+        if (parts.length == 2) return parts.pop().split(";").shift();
+    }
     function onLoaded() {
-        var back_token = '{{token}}';
-        var back_name = '{{name}}';
-        if(back_token){
-            sessionStorage.setItem("token", back_token);
-            sessionStorage.setItem("name", back_name);
-            window.history.pushState("", "Home Page", '/');
-        }
-        var token = sessionStorage.getItem("token");
+        var token = getCookie('token');
         if (token) {
-            var name = sessionStorage.getItem("name");
+            var name = getCookie('name');
             document.getElementById("hello").innerHTML = "Hello " + name + "!"
             loadModules(token);
             //fallingLeaves();
