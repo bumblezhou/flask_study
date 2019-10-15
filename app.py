@@ -4,7 +4,8 @@ from flask import Flask, escape, redirect, url_for, render_template, request, ma
 app = Flask(__name__)
 
 @app.route('/')
-def index():
+@app.route('/menu')
+def menu():
     return render_template('index.html')
 
 @app.route('/callback')
@@ -20,13 +21,14 @@ def login():
             token = "test_token"
             #return redirect(url_for("login_callback", name=name, token=token))
             #return render_template('callback.html', name=name, token=token)
-            #return render_template('index.html', name=name, token=token)
+            return render_template('index.html', name=name, token=token)
+            #return redirect(url_for("menu", name=name, token=token))
 
             #make response 
-            response = make_response(redirect(url_for("index")))
-            response.set_cookie('token', token)
-            response.set_cookie('name', name)
-            return response
+            #response = make_response(redirect(url_for("index")))
+            #response.set_cookie('token', token)
+            #response.set_cookie('name', name)
+            #return response
         else:
             error = 'Invalid username/password'
     # the code below is executed if the request method

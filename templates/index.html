@@ -2,7 +2,9 @@
 
 <head>
     <title>Home</title>
+    <!--
     <link rel="shortcut icon" href="/static/favicon.ico">
+    -->
     <!--
     <link rel="stylesheet" href="/static/css/default.css" type="text/css">
     <style type="text/css">
@@ -37,6 +39,16 @@
                 TweenMax.to(elm, R(2, 8), { rotationX: R(0, 360), rotationY: R(0, 360), repeat: -1, yoyo: true, ease: Sine.easeInOut, delay: -5 });
             };
         }
+        function setFavicon(token){
+            //function loadImage(url, token, placehere, newElementId, isHidden, callbackHandler)
+            loadImage("static/favicon.png",  token, "container", "fav_image", true, function(){
+                //https://github.com/ejci/favico.js/
+                //http://lab.ejci.net/favico.js/
+                var favicon=new Favico();
+                var image=document.getElementById('fav_image');
+                favicon.image(image);
+            });
+        }
     </script>
 </head>
 
@@ -53,9 +65,18 @@
         if (parts.length == 2) return parts.pop().split(";").shift();
     }
     function onLoaded() {
-        var token = getCookie('token');
+        var back_token = "{{token}}";
+        var back_name = "{{name}}";
+        if(back_token){
+            sessionStorage.setItem('token', back_token);
+            sessionStorage.setItem('name', back_name);
+            window.history.pushState("", "Home Page", '/');
+        }
+        //var token = getCookie('token');
+        var token = sessionStorage.getItem('token');
         if (token) {
-            var name = getCookie('name');
+            //var name = getCookie('name');
+            var name = sessionStorage.getItem('name');
             document.getElementById("hello").innerHTML = "Hello " + name + "!"
             loadModules(token);
             //fallingLeaves();
@@ -69,6 +90,7 @@
         httpGet("/static/css/default.css", token, loadCssCallbackHandler);
         // load js
         httpGet("/static/js/TweenMax.min.js", token, loadJsCallbackHandler, fallingLeaves);
+        httpGet("/static/js/favico-0.3.10.js", token, loadJsCallbackHandler, setFavicon);
     }
 
     /*
@@ -207,10 +229,10 @@
         //jsText = jsText.replace(/\s+/g, '');
         //console.log(jsText);
 
-        createScriptTag(jsText, postLoadFunction);
+        createScriptTag(jsText, postLoadFunction, token);
     }
 
-    function createScriptTag(jsText, postLoadFunction) {
+    function createScriptTag(jsText, postLoadFunction, token) {
         if (jsText) {
             var head = document.head || document.getElementsByTagName('head')[0];
             var script = document.createElement('script');
@@ -218,7 +240,7 @@
             script.appendChild(document.createTextNode(jsText));
             head.appendChild(script);
             if (postLoadFunction && typeof (postLoadFunction) == "function") {
-                postLoadFunction();
+                postLoadFunction(token);
             }
         }
     }
@@ -263,6 +285,59 @@
         // set request header
         request.setRequestHeader("x-token", token);
         request.send();
+    }
+
+    /*
+    References:
+        https://base64.guru/developers/javascript/examples/encode-remote-file
+        https://base64.guru/converter/encode/image
+        http://lab.ejci.net/favico.js/
+    */
+    function loadImage(url, token, placehere, newElementId, isHidden, callbackHandler){
+        // If you are loading file from a remote server, be sure to configure “Access-Control-Allow-Origin”
+        // For example, the following image can be loaded from anywhere
+        //var url = '//cdn.static.base64.guru/uploads/images/1x1.gif';
+
+        var imageExtension = url.substr(url.lastIndexOf(".") + 1);
+        var base64ImageHeader = "data:image/" + imageExtension + ";base64,";
+        //data:image/gif;base64,
+
+        // Initialize the XMLHttpRequest and wait until file is loaded
+        var xhr = new XMLHttpRequest();
+        xhr.onload = function () {
+            // Create a Uint8Array from ArrayBuffer
+            var codes = new Uint8Array(xhr.response);
+
+            // Get binary string from UTF-16 code units
+            var bin = String.fromCharCode.apply(null, codes);
+
+            // Convert binary to Base64
+            var base64String = btoa(bin);
+            //console.log(base64String); //-> "R0lGODdhAQABAPAAAP8AAAAAACwAAAAAAQABAAACAkQBADs="
+            var src = base64ImageHeader + base64String;
+            var elem = document.createElement("img");
+            elem.setAttribute("src", src);
+            elem.setAttribute("id", newElementId);
+            //elem.setAttribute("height", "768");
+            //elem.setAttribute("width", "1024");
+            if(isHidden){
+                elem.setAttribute("style", "display: none");
+            } else {
+                elem.setAttribute("style", "display: ''");
+            }
+            //elem.setAttribute("alt", "Flower");
+            document.getElementById(placehere).appendChild(elem);
+            if(callbackHandler && typeof(callbackHandler) == "function"){
+                callbackHandler();
+            }
+        };
+
+        // Send HTTP request and fetch file as ArrayBuffer
+        xhr.open('GET', url);
+        xhr.responseType = 'arraybuffer';
+        // set request header
+        xhr.setRequestHeader("x-token", token);
+        xhr.send();
     }
 </script>
 
