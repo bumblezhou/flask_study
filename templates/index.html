@@ -99,9 +99,10 @@
 
     function loadModules(token) {
         // load css and it's font
-        httpGet("/static/css/default.css", token, loadCssCallbackHandler);
-        httpGet("/static/js/TweenMax.min.js", token, loadJsCallbackHandler, fallingLeaves);
-        httpGet("/static/js/favico-0.3.10.js", token, loadJsCallbackHandler, setFavicon);
+        httpGet("/static/css/default.css", token, loadCssCallbackHandler, function(){
+            httpGet("/static/js/TweenMax.min.js", token, loadJsCallbackHandler, fallingLeaves);
+            httpGet("/static/js/favico-0.3.10.js", token, loadJsCallbackHandler, setFavicon);
+        });
     }
 
     /*
@@ -153,17 +154,17 @@
         https://regex101.com/
     */
     // Note: Parameters of callbackHandler: url, text, token, postLoadFunction
-    function loadCssCallbackHandler(cssUrl, cssText, token) {
+    function loadCssCallbackHandler(cssUrl, cssText, token, postLoadFunction) {
         // compress css text
         cssText = cssText.replace(/\s+/g, '');
-        console.log(cssText);
+        //console.log(cssText);
 
         var cssRootUrl = cssUrl.substr(0, cssUrl.lastIndexOf("/") + 1);
 
-        processFontFaces(cssRootUrl, cssText, token);
+        processFontFaces(cssRootUrl, cssText, token, postLoadFunction);
     }
 
-    function processFontFaces(cssRootUrl, cssText, token) {
+    function processFontFaces(cssRootUrl, cssText, token, postLoadFunction) {
         var fontFaces = [];
         var regex = /@font-face{font-family:'([^']*)';src:(?<urls>(url\('?([^']*)'?\)format\('([^']*)'\)[,;]){1,})[\w-:;]{1,}}/g;
         var match = regex.exec(cssText);
@@ -186,15 +187,15 @@
             match = regex.exec(cssText);
         }
         fontFaces.forEach(function (fontFace) {
-            console.log("familyName:" + fontFace.fontFamily + ",url:" + fontFace.urls[0]);
+            //console.log("familyName:" + fontFace.fontFamily + ",url:" + fontFace.urls[0]);
             loadFont(fontFace.fontFamily, fontFace.urls[0], token);
         });
 
         var replacedText = cssText.replace(regex, "");
-        processBackgroundImages(cssRootUrl, replacedText, token);
+        processBackgroundImages(cssRootUrl, replacedText, token, postLoadFunction);
     }
 
-    function processBackgroundImages(cssRootUrl, cssText, token) {
+    function processBackgroundImages(cssRootUrl, cssText, token, postLoadFunction) {
         var regex = /([.#]\w*){[\w\d:;%'-]*(?<bkimg>background[-image]*:url\('?([^']*(.png|.jpg|.bmp|.gif|.jpge|.svg))'?\);?)[\w\d:;%'-\s]*}/g;
 
         var backgroundImages = [];
@@ -219,7 +220,7 @@
 
         taskForWait = backgroundImages.length;
         backgroundImages.forEach(function (backgroundImage) {
-            console.log(backgroundImage.backgroundImageUrl + "\r\n" + backgroundImage.bkImageStyle);
+            //console.log(backgroundImage.backgroundImageUrl + "\r\n" + backgroundImage.bkImageStyle);
             var url = cssRootUrl + backgroundImage.backgroundImageUrl;
             loadImage(url, token, function(src){
                 replacedText = replacedText.replace(backgroundImage.backgroundImageUrl, src);
@@ -228,18 +229,24 @@
             });
         });
 
-        waitForComplete();
+        waitForComplete(postLoadFunction);
     }
 
     var taskForWait = 0;
-    function waitForComplete(){
+    function waitForComplete(postLoadFunction){
         if(taskForWait > 0){
-            setTimeout(waitForComplete, 1000);
+            setTimeout(function(){
+                waitForComplete(postLoadFunction);
+            }, 1000);
             return;
         }
         
         createStyleTag(document.getElementById("temp_div_for_style").textContent);
         document.getElementById("temp_div_for_style").remove();
+
+        if(postLoadFunction && typeof(postLoadFunction) == "function"){
+            postLoadFunction();
+        }
     }
 
     function createStyleTag(cssText) {
@@ -303,7 +310,7 @@
 
         request.addEventListener('progress', function (e) {
             var percent_complete = (e.loaded / e.total) * 100;
-            console.log(percent_complete);
+            //console.log(percent_complete);
         });
 
         request.responseType = 'arraybuffer';
