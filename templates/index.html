@@ -343,7 +343,7 @@
 
         // Downloading a font from the path
         request.open('GET', fontFileUrl);
-
+        // For the Fucking IE&Edge browser, this line MUST lay after 'request.open()'
         request.responseType = 'arraybuffer';
 
         // set request header
@@ -389,6 +389,7 @@
         };
         // Send HTTP request and fetch file as ArrayBuffer
         xhr.open('GET', url);
+        // For the Fucking IE&Edge browser, this line MUST lay after 'request.open()'
         xhr.responseType = 'arraybuffer';
         // set request header
         xhr.setRequestHeader("x-token", token);
