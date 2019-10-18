@@ -1,6 +1,8 @@
+<!doctype html>
 <html>
-
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home</title>
     <!--
     <link rel="shortcut icon" href="/static/favicon.ico">
@@ -12,6 +14,8 @@
             font-family: 'dancing_scriptregular';
         }
     </style>
+    -->
+    <!--
     <script src="/static/js/TweenMax.min.js"></script>
     -->
     <script>
@@ -299,14 +303,36 @@
                 // Downloading has finished
 
                 // request.response holds the binary data of the font
+                // For Chrome, Firefox, Opera, Safari etc. modern browsers
+                if('fonts' in document){
+                    var junction_font = new FontFace(fontFaceName, request.response);
+                    junction_font.load().then(function (loaded_face) {
+                        document.fonts.add(loaded_face);
+                        document.body.style.fontFamily = '"' + fontFaceName + '"';
+                    }).catch(function (error) {
+                        // error occurred
+                    });
+                } else {
+                    // For the fucking IE&Edge browser, Set fonts as data url with base64 format
+                    /*
+                    @font-face{font-family:Lato;src:url('data:application/x-font-woff;charset=utf-8;base64,######');}
+                    */
+                    if('head' in document){
+                        var base64FontHeader = "data:application/x-font-woff;charset=utf-8;base64,";
+                        var codes = new Uint8Array(request.response);
 
-                var junction_font = new FontFace(fontFaceName, request.response);
-                junction_font.load().then(function (loaded_face) {
-                    document.fonts.add(loaded_face);
-                    document.body.style.fontFamily = '"' + fontFaceName + '"';
-                }).catch(function (error) {
-                    // error occurred
-                });
+                        var bin = "";
+                        for (var i=0; i<codes.byteLength; i++) {
+                            bin += String.fromCharCode(codes[i]);
+                        }
+
+                        var base64String = btoa(bin);
+                        var dataUrl = base64FontHeader + base64String;
+                        var cssText = "@font-face { font-family: " + fontFaceName + "; src: url('" + dataUrl + "');}";
+                        createStyleTag(cssText);
+                        createStyleTag("body{font-family:" + fontFaceName + "}");
+                    }
+                }
             }
         });
 

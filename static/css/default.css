@@ -1,15 +1,15 @@
 @font-face {
     font-family: 'dancing_scriptbold';
-    src: url('../font/dancingscript-bold-webfont.woff2') format('woff2'),
-         url('../font/dancingscript-bold-webfont.woff') format('woff');
+    src: url('../font/dancingscript-bold-webfont.woff') format('woff'),
+    url('../font/dancingscript-bold-webfont.woff2') format('woff2');
     font-weight: normal;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'dancing_scriptregular';
-    src: url('../font/dancingscript-regular-webfont.woff2') format('woff2'),
-         url('../font/dancingscript-regular-webfont.woff') format('woff');
+    src: url('../font/dancingscript-regular-webfont.woff') format('woff'),
+    url('../font/dancingscript-regular-webfont.woff2') format('woff2');
     font-weight: normal;
     font-style: normal;
 }
