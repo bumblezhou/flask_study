@@ -166,7 +166,7 @@
 
     function processFontFaces(cssRootUrl, cssText, token, postLoadFunction) {
         var fontFaces = [];
-        var regex = /@font-face{font-family:'([^']*)';src:(?<urls>(url\('?([^']*)'?\)format\('([^']*)'\)[,;]){1,})[\w-:;]{1,}}/g;
+        var regex = /@font-face{font-family:'([^']*)';src:((url\('?([^']*)'?\)format\('([^']*)'\)[,;]){1,})[\w-:;]{1,}}/g;
         var match = regex.exec(cssText);
         while (match != null) {
             //console.log(match[0]);
@@ -196,7 +196,7 @@
     }
 
     function processBackgroundImages(cssRootUrl, cssText, token, postLoadFunction) {
-        var regex = /([.#]\w*){[\w\d:;%'-]*(?<bkimg>background[-image]*:url\('?([^']*(.png|.jpg|.bmp|.gif|.jpge|.svg))'?\);?)[\w\d:;%'-\s]*}/g;
+        var regex = /([.#]\w*){[\w\d:;%'-]*(background[-image]*:url\('?([^']*(.png|.jpg|.bmp|.gif|.jpge|.svg))'?\);?)[\w\d:;%'-\s]*}/g;
 
         var backgroundImages = [];
         var match = regex.exec(cssText);
@@ -242,7 +242,9 @@
         }
         
         createStyleTag(document.getElementById("temp_div_for_style").textContent);
-        document.getElementById("temp_div_for_style").remove();
+        //document.getElementById("temp_div_for_style").remove();
+        var child = document.getElementById("temp_div_for_style");
+        child.parentElement.removeChild(child);
 
         if(postLoadFunction && typeof(postLoadFunction) == "function"){
             postLoadFunction();
@@ -313,10 +315,11 @@
             //console.log(percent_complete);
         });
 
-        request.responseType = 'arraybuffer';
-
         // Downloading a font from the path
         request.open('GET', fontFileUrl);
+
+        request.responseType = 'arraybuffer';
+
         // set request header
         request.setRequestHeader("x-token", token);
         request.send();
