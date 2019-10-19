@@ -14,3 +14,4 @@
     4.javascript代码在线编辑器： https://playcode.io/
     5.httpRequest在线参考： https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest
     6.flask在线参考： https://flask.palletsprojects.com/en/1.1.x/quickstart/
+	7.何时使用并发: https://realpython.com/python-concurrency/#when-to-use-concurrency
