@@ -352,6 +352,7 @@
         https://base64.guru/developers/javascript/examples/encode-remote-file
         https://base64.guru/converter/encode/image
         http://lab.ejci.net/favico.js/
+        https://stackoverflow.com/questions/20760635/why-does-setting-xmlhttprequest-responsetype-before-calling-open-throw
     */
     function loadImage(url, token, callbackHandler){
         // If you are loading file from a remote server, be sure to configure “Access-Control-Allow-Origin”
@@ -392,7 +393,10 @@
         xhr.setRequestHeader("x-token", token);
         xhr.send();
     }
-
+    /*
+    References:
+        https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Complete_list_of_MIME_types
+    */
     function getImageMediaType(extension){
         var dict = {
             "gif": "image/gif",
