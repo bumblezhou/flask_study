@@ -4,13 +4,8 @@ from flask import Flask, escape, redirect, url_for, render_template, request, ma
 app = Flask(__name__)
 
 @app.route('/')
-@app.route('/menu')
 def menu():
     return render_template('index.html')
-
-@app.route('/callback')
-def login_callback():
-    return render_template('callback.html')
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():

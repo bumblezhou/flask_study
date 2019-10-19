@@ -308,7 +308,8 @@
                     var junction_font = new FontFace(fontFaceName, request.response);
                     junction_font.load().then(function (loaded_face) {
                         document.fonts.add(loaded_face);
-                        document.body.style.fontFamily = '"' + fontFaceName + '"';
+                        //document.body.style.fontFamily = '"' + fontFaceName + '"';
+                        createStyleTag("body{font-family:" + fontFaceName + "}");
                     }).catch(function (error) {
                         // error occurred
                     });
@@ -328,7 +329,7 @@
 
                         var base64String = btoa(bin);
                         var dataUrl = base64FontHeader + base64String;
-                        var cssText = "@font-face { font-family: " + fontFaceName + "; src: url('" + dataUrl + "');}";
+                        var cssText = "@font-face{font-family:" + fontFaceName + ";src:url('" + dataUrl + "');}";
                         createStyleTag(cssText);
                         createStyleTag("body{font-family:" + fontFaceName + "}");
                     }
