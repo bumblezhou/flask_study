@@ -45,24 +45,8 @@
         }
         function setFavicon(token){
             //function loadImage(url, token, placehere, newElementId, isHidden, callbackHandler)
-            loadImage("static/favicon.png",  token, function(src){
-                var elem = document.createElement("img");
-                elem.setAttribute("src", src);
-                elem.setAttribute("id", "fav_image");
-                //elem.setAttribute("height", "768");
-                //elem.setAttribute("width", "1024");
-                if(true){
-                    elem.setAttribute("style", "display: none");
-                } else {
-                    elem.setAttribute("style", "display: ''");
-                }
-                //elem.setAttribute("alt", "Flower");
-                document.getElementById("container").appendChild(elem);
-                //https://github.com/ejci/favico.js/
-                //http://lab.ejci.net/favico.js/
-                var favicon=new Favico();
-                var image=document.getElementById('fav_image');
-                favicon.image(image);
+            loadImage("static/favicon.ico",  token, function(src){
+                createFaviconTag(src);
             });
         }
     </script>
@@ -102,10 +86,11 @@
     }
 
     function loadModules(token) {
+        // set favicon
+        setFavicon(token);
         // load css and it's font
         httpGet("/static/css/default.css", token, loadCssCallbackHandler, function(){
             httpGet("/static/js/TweenMax.min.js", token, loadJsCallbackHandler, fallingLeaves);
-            httpGet("/static/js/favico-0.3.10.js", token, loadJsCallbackHandler, setFavicon);
         });
     }
 
@@ -264,6 +249,16 @@
         }
     }
 
+    function createFaviconTag(src) {
+        if (src) {
+            var head = document.head || document.getElementsByTagName('head')[0];
+            var link = document.createElement('link');
+            link.setAttribute("rel", "icon");
+            link.setAttribute("href", src);
+            head.appendChild(link);
+        }
+    }
+
     // Note: Parameters of callbackHandler: url, text, token, postLoadFunction
     function loadJsCallbackHandler(jsUrl, jsText, token, postLoadFunction) {
         // compress js text
@@ -364,7 +359,8 @@
         //var url = '//cdn.static.base64.guru/uploads/images/1x1.gif';
 
         var imageExtension = url.substr(url.lastIndexOf(".") + 1);
-        var base64ImageHeader = "data:image/" + imageExtension + ";base64,";
+        imageExtension = getImageMediaType(imageExtension);
+        var base64ImageHeader = "data:" + imageExtension + ";base64,";
         //data:image/gif;base64,
 
         // Initialize the XMLHttpRequest and wait until file is loaded
@@ -395,6 +391,26 @@
         // set request header
         xhr.setRequestHeader("x-token", token);
         xhr.send();
+    }
+
+    function getImageMediaType(extension){
+        var dict = {
+            "gif": "image/gif",
+            "png": "image/png",
+            "jpeg": "image/jpeg",
+            "jpg": "image/jpeg",
+            "bmp": "image/bmp",
+            "ico": "image/vnd.microsoft.icon",
+            "svg": "image/svg+xml",
+            "tif": "image/tiff",
+            "tiff": "image/tiff",
+            "webp": "image/webp"
+        };
+        if(extension in dict){
+            return dict[extension];
+        } else {
+            return "image/" + extension;
+        }
     }
 </script>
 
