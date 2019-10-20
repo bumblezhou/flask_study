@@ -5,7 +5,9 @@ import aiohttp
 
 async def download_site(session, url):
     async with session.get(url) as response:
-        print("Read {0} from {1}".format(response.content_length, url))
+        #print("Read {0} from {1}".format(response.content_length, url))
+        content_length = response.content_length
+        pass
 
 
 async def download_all_sites(sites):
