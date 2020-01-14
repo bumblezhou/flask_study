@@ -60,6 +60,17 @@
                 window.location.href = "/login";
             }
         }
+
+        function uploadFile(){
+            var token = sessionStorage.getItem('token');
+            if (token) {
+                saveFile("/upload", token, function(ajaxData){
+                    console.log(ajaxData);
+                });
+            } else {
+                window.location.href = "/login";
+            }
+        }
     </script>
 </head>
 
@@ -68,6 +79,11 @@
         <h1 id="hello"></h1>
         <div>Test Text</div>
         <input type="button" value="Call backend method" onclick="javascript:callBackendMethod();" />
+        <br />
+        <br />
+        <input type="file" name="file">
+        <br />
+        <input type="button" value="Upload" onclick="javascript:uploadFile();">
     </div>
 </body>
 <script>
@@ -76,6 +92,7 @@
         var parts = value.split("; " + name + "=");
         if (parts.length == 2) return parts.pop().split(";").shift();
     }
+
     function onLoaded() {
         var back_token = "{{token}}";
         var back_name = "{{name}}";
@@ -104,6 +121,35 @@
         httpGet("/static/css/default.css", token, loadCssCallbackHandler, function(){
             httpGet("/static/js/TweenMax.min.js", token, loadJsCallbackHandler, fallingLeaves);
         });
+    }
+
+    /*
+    References:
+        https://developer.mozilla.org/en-US/docs/Web/API/File/Using_files_from_web_applications
+    */
+    function saveFile(url, token, callbackHandler) {
+        const request = new XMLHttpRequest();
+        const formData = new FormData();
+        const fileField = document.querySelector('input[type="file"]');
+        formData.append('myFile', fileField.files[0]);
+        formData.append('username', 'abc123');
+        request.onreadystatechange = function() {
+            if (request.readyState == 4 && request.status == 200) {
+                // request.response holds the binary data of the font
+                if (callbackHandler && typeof (callbackHandler) == "function") {
+                    // Note: Parameters of callbackHandler: url, text, token, postLoadFunction
+                    callbackHandler(request.responseText);
+                }
+            }
+        };
+        request.open("POST", url, true);
+        // set request header
+        request.setRequestHeader("x-token", token);
+        // request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        // request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        request.setRequestHeader('Content-type', 'multipart/form-data');
+        // Initiate a multipart/form-data upload
+        request.send(formData);
     }
 
     /*
@@ -152,7 +198,6 @@
 
         //usr POST method
         request.send(JSON.stringify(data));
-        
     }
 
     /*
