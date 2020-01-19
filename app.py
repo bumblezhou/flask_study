@@ -79,8 +79,4 @@ def valid_login(username, password):
 
 # run the application
 if __name__ == "__main__":
-<<<<<<< HEAD
-    app.run(host='0.0.0.0', port=7000, threaded=True)
-=======
-    app.run(host='0.0.0.0', port=8080, debug=True)
->>>>>>> 5826103a1f8f2b675e02ad211bb463b6d8f50589
+    app.run(host='0.0.0.0', port=8080, threaded=True)
