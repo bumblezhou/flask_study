@@ -15,3 +15,13 @@
     5.httpRequest在线参考： https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest
     6.flask在线参考： https://flask.palletsprojects.com/en/1.1.x/quickstart/
     7.何时使用并发: https://realpython.com/python-concurrency/#when-to-use-concurrency
+
+## How to run:
+    pip install --no-cache-dir -r requirements.txt --proxy=http://192.168.0.11:8118
+    python3 ./app.py
+
+## Screeshots:
+1. Login
+![1. Login](./screenshots/1.jpg "Login")
+2. HomePage
+![HomePage](./screenshots/2.jpg "HomePage")
